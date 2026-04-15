@@ -14,18 +14,40 @@ def send_message(text):
         data={"chat_id": CHAT_ID, "text": text}
     )
 
-send_message("✅ Бот запущений")
+send_message("Не лізь, я працюю")
+
+last_content = None
+first_check_done = False
+
+# список країн які тебе цікавлять
+WATCHLIST = {
+    "ukraine": "🇺🇦 Ukraine",
+    "europe": "🌍 Europe",
+    "russia": "🇷🇺 Russia",
+    "belarus": "🇧🇾 Belarus",
+    "kazakhstan": "🇰🇿 Kazakhstan",
+    "poland": "🇵🇱 Poland",
+    "germany": "🇩🇪 Germany"
+}
 
 while True:
     try:
         response = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"})
-        content = response.text
+        content = response.text.lower()
+
+        # формуємо знайдені країни
+        found = [name for key, name in WATCHLIST.items() if key in content]
 
         if last_content and content != last_content:
-            if "Ukraine" in content or "Europe" in content:
-                send_message("🇺🇦🔥 МОЖЛИВО КВИТКИ!")
+            if found:
+                send_message("Ух єбать, збагачений уран?: " + ", ".join(found))
             else:
-                send_message("🔄 Сайт оновився")
+                send_message("Глянь ануно, тут шось нове")
+
+        # після першої перевірки
+        if not first_check_done:
+            send_message("Глянув, нічого інтересного")
+            first_check_done = True
 
         last_content = content
         time.sleep(120)
