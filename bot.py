@@ -6,20 +6,9 @@ CHAT_ID = "1936329519"
 
 URL = "https://www.digitalcircus.movie/"
 
-last_content = ""
-
-def send_message(text):
-    requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        data={"chat_id": CHAT_ID, "text": text}
-    )
-
-send_message("Не лізь, я працюю")
-
 last_content = None
 first_check_done = False
 
-# список країн які тебе цікавлять
 WATCHLIST = {
     "ukraine": "🇺🇦 Ukraine",
     "europe": "🌍 Europe",
@@ -30,24 +19,56 @@ WATCHLIST = {
     "germany": "🇩🇪 Germany"
 }
 
+def send_message(text):
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        data={"chat_id": CHAT_ID, "text": text}
+    )
+
+def extract_countries(text):
+    text = text.lower()
+    return {name for key, name in WATCHLIST.items() if key in text}
+
+def diff_score(a, b):
+    return len(a.symmetric_difference(b))
+
+send_message("Да працюю я, не лізь")
+
 while True:
     try:
         response = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"})
-        content = response.text.lower()
+        content = response.text
 
-        # формуємо знайдені країни
-        found = [name for key, name in WATCHLIST.items() if key in content]
+        current = extract_countries(content)
+        previous = extract_countries(last_content or "")
 
-        if last_content and content != last_content:
-            if found:
-                send_message("Ух єбать, збагачений уран?: " + ", ".join(found))
-            else:
-                send_message("Глянь ануно, тут шось нове")
+        added = current - previous
+        removed = previous - current
+        changes = diff_score(current, previous)
 
-        # після першої перевірки
         if not first_check_done:
-            send_message("Глянув, нічого інтересного")
+            send_message("👀 Перша перевірка завершена")
             first_check_done = True
+
+        else:
+            # 🟢 РІВЕНЬ 1 — важливі країни
+            if added:
+                send_message("Ух єбать, збагачений уран: " + ", ".join(added))
+
+            # 🟡 РІВЕНЬ 2 — великі зміни
+            elif changes >= 3:
+                msg = "Шось інтересне, глянь:\n"
+
+                if added:
+                    msg += "➕ Додано: " + ", ".join(added) + "\n"
+                if removed:
+                    msg += "➖ Видалено: " + ", ".join(removed)
+
+                send_message(msg)
+
+            # 🔴 РІВЕНЬ 3 — нічого важливого
+            else:
+                pass
 
         last_content = content
         time.sleep(120)
