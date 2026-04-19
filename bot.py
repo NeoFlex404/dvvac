@@ -9,6 +9,9 @@ CHAT_ID = "1936329519"
 
 URL = "https://www.digitalcircus.movie/"
 
+BASE_SLEEP = 300
+BLOCKED_SLEEP = 900
+
 WATCHLIST = {
     "ukraine": "🇺🇦 Ukraine",
     "europe": "🌍 Europe",
@@ -87,12 +90,16 @@ def extract_watchlist(text):
     return {name for key, name in WATCHLIST.items() if key in text}
 
 while True:
+    time.sleep(60)
     try:
         response = requests.get(URL, headers=HEADERS)
         if response.status_code == 429:
             print("429 Too Many Requests — чекаю довше...")
-            time.sleep(600)  # 10 хв
+            time.sleep(BLOCKED_SLEEP)
+            BLOCKED_SLEEP = min(BLOCKED_SLEEP * 1.5, 3600)
             continue
+        else:
+            BLOCKED_SLEEP = 900
         content = extract_useful_content(response.text)
 
         if content is None:
@@ -131,8 +138,8 @@ while True:
                     send_message("Шось таки є (Не багато)")
 
         last_content = content
-        time.sleep(180)
+        time.sleep(BASE_SLEEP)
 
     except Exception as e:
         print("Error:", e)
-        time.sleep(180)
+        time.sleep(BASE_SLEEP)
