@@ -1,6 +1,8 @@
 import requests
 import time
 import difflib
+from bs4 import BeautifulSoup
+import re
 
 TOKEN = "8656408586:AAF7DDvVlBs2PC-XtdtR884Ym3kYoK4Q3aY"
 CHAT_ID = "1936329519"
@@ -16,6 +18,47 @@ WATCHLIST = {
     "poland": "🇵🇱 Poland",
     "germany": "🇩🇪 Germany"
 }
+
+NOISE_PATTERNS = [
+    "wix-essential-viewer-model",
+    "thunderbolt",
+    "viewerModel",
+    "static.parastorage.com",
+    "siteAssets",
+    "fleetConfig",
+    "componentsLibrariesTopology",
+    "ssr",
+    "experiments"
+]
+
+def clean_html(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+
+    # видаляємо шумні теги
+    for tag in soup(["script", "style", "noscript"]):
+        tag.decompose()
+
+    text = soup.get_text(separator=" ", strip=True)
+
+    # прибираємо зайві пробіли
+    text = re.sub(r"\s+", " ", text)
+
+    return text
+
+
+def is_noise(text: str) -> bool:
+    text_lower = text.lower()
+    return any(pat.lower() in text_lower for pat in NOISE_PATTERNS)
+
+
+def extract_useful_content(html: str) -> str | None:
+    cleaned = clean_html(html)
+
+    # якщо це технічний Wix-мусор — ігноруємо
+    if is_noise(cleaned):
+        return None
+
+    return cleaned
 
 last_content = None
 first_check_done = False
@@ -39,7 +82,10 @@ def extract_watchlist(text):
 while True:
     try:
         response = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"})
-        content = clean_html(response.text)
+        content = extract_useful_content(response.text)
+
+        if content is None:
+            continue
 
         current_watch = extract_watchlist(content)
         previous_watch = extract_watchlist(last_content or "")
