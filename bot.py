@@ -50,6 +50,13 @@ def is_noise(text: str) -> bool:
     text_lower = text.lower()
     return any(pat.lower() in text_lower for pat in NOISE_PATTERNS)
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9,uk;q=0.8",
+    "Connection": "keep-alive",
+    "Cache-Control": "no-cache",
+}
 
 def extract_useful_content(html: str) -> str | None:
     cleaned = clean_html(html)
@@ -81,7 +88,11 @@ def extract_watchlist(text):
 
 while True:
     try:
-        response = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"})
+        response = requests.get(URL, headers=HEADERS)
+        if response.status_code == 429:
+            print("429 Too Many Requests — чекаю довше...")
+            time.sleep(600)  # 10 хв
+            continue
         content = extract_useful_content(response.text)
 
         if content is None:
@@ -120,8 +131,8 @@ while True:
                     send_message("Шось таки є (Не багато)")
 
         last_content = content
-        time.sleep(120)
+        time.sleep(180)
 
     except Exception as e:
         print("Error:", e)
-        time.sleep(120)
+        time.sleep(180)
