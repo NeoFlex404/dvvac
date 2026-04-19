@@ -12,6 +12,18 @@ URL = "https://www.digitalcircus.movie/"
 BASE_SLEEP = 300
 BLOCKED_SLEEP = 900
 
+NOISE_PATTERNS = [
+    "wix-essential-viewer-model",
+    "thunderbolt",
+    "viewerModel",
+    "static.parastorage.com",
+    "siteAssets",
+    "fleetConfig",
+    "componentsLibrariesTopology",
+    "ssr",
+    "experiments"
+]
+
 WATCHLIST = {
     "ukraine": "🇺🇦 Ukraine",
     "europe": "🌍 Europe",
