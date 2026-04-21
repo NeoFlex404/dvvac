@@ -125,15 +125,19 @@ while True:
             if added_watch:
                 send_message("Ух єбать, збагачений уран!!!: " + ", ".join(added_watch))
 
-            elif last_content and content != last_content:
+            if last_content and content != last_content:
                 diff = list(difflib.unified_diff(
                     last_content.split(),
                     content.split(),
                     lineterm=""
                 ))
-
-                changes = [line for line in diff if line.startswith("+") or line.startswith("-")]
-
+            
+                changes = [
+                    line for line in diff
+                    if (line.startswith("+") or line.startswith("-"))
+                    and not (line.startswith("+++") or line.startswith("---"))
+                ]
+            
                 if changes:
                     msg = "Ось шо найшов:\n" + "\n".join(changes[:50])
                     send_message(msg)
