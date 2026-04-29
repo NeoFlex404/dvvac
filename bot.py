@@ -57,15 +57,22 @@ def clean_html(html: str) -> str:
     return text
 
 
-def is_noise(text: str) -> bool:
-    text_lower = text.lower()
-    return any(pat.lower() in text_lower for pat in NOISE_PATTERNS)
+def is_noise(text: str) -> str:
+    lines = text.splitlines()
+    clean_lines = []
+
+    for line in lines:
+        if not any(pat.lower() in line.lower() for pat in NOISE_PATTERNS):
+            clean_lines.append(line)
+
+    return "\n".join(clean_lines)
 
 
 def extract_useful_content(html: str) -> str | None:
     cleaned = clean_html(html)
+    cleaned = remove_noise_lines(cleaned)
 
-    if is_noise(cleaned):
+    if not cleaned or len(cleaned) < 50:
         return None
 
     return cleaned
@@ -87,8 +94,7 @@ send_message("Да працюю я, не лізь")
 
 def extract_watchlist(text):
     text = text.lower()
-    return {name for key, name in WATCHLIST.items() if key in text}
-
+    return {name for key, name in WATCHLIST.items() if re.search(rf"\b{key}\b", text)}
 
 while True:
     try:
@@ -127,8 +133,8 @@ while True:
 
             if last_content and content != last_content:
                 diff = list(difflib.unified_diff(
-                    last_content.split(),
-                    content.split(),
+                    last_content.splitlines(),
+                    content.splitlines(),
                     lineterm=""
                 ))
             
