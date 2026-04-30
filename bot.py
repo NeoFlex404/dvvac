@@ -57,7 +57,7 @@ def clean_html(html: str) -> str:
     return text
 
 
-def is_noise(text: str) -> str:
+def remove_noise_lines(text: str) -> str:
     lines = text.splitlines()
     clean_lines = []
 
